@@ -1,0 +1,389 @@
+<!-- templates/home.html -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>Mafia RPG - 홈</title>
+<link rel="icon" href="data:,">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+*{box-sizing:border-box}
+
+body{
+    margin:0;
+    font-family:Arial,sans-serif;
+    background:#0b1220;
+    color:#e5e7eb;
+}
+
+header{
+    background:#111827;
+    padding:16px 24px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:10px;
+}
+
+header h1{
+    margin:0;
+    font-size:24px;
+}
+
+.userbar{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    align-items:center;
+    font-size:14px;
+}
+
+.userbar a{
+    color:#60a5fa;
+    text-decoration:none;
+}
+
+.container{
+    max-width:1100px;
+    margin:auto;
+    padding:24px;
+}
+
+.notice{
+    background:linear-gradient(135deg,#7c3aed,#4f46e5);
+    padding:14px;
+    border-radius:12px;
+    margin-bottom:20px;
+    font-weight:bold;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+}
+
+.card{
+    background:#1f2937;
+    padding:22px;
+    border-radius:14px;
+}
+
+.card h2{
+    margin-top:0;
+}
+
+.stat{
+    margin:6px 0;
+}
+
+.expWrap{
+    width:100%;
+    height:22px;
+    background:#374151;
+    border-radius:999px;
+    overflow:hidden;
+    margin-top:12px;
+    position:relative;
+}
+
+.expBar{
+    height:100%;
+    background:linear-gradient(90deg,#22c55e,#16a34a);
+}
+
+.expText{
+    position:absolute;
+    inset:0;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:12px;
+    font-weight:bold;
+}
+
+.bigBtn{
+    width:100%;
+    padding:14px;
+    margin-top:10px;
+    border:none;
+    border-radius:12px;
+    color:white;
+    font-size:16px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+.playBtn{background:#22c55e;}
+.rankBtn{background:#3b82f6;}
+.shopBtn{background:#f59e0b;}
+
+.list{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+}
+
+.listItem{
+    background:#111827;
+    padding:10px 12px;
+    border-radius:10px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.qty{
+    color:#9ca3af;
+    font-size:13px;
+}
+
+.empty{
+    color:#6b7280;
+    text-align:center;
+    padding:12px;
+}
+
+.shopBtnSmall{
+    background:#f59e0b;
+    color:white;
+    border:none;
+    padding:6px 12px;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+.toast{
+    position:fixed;
+    bottom:20px;
+    left:50%;
+    transform:translateX(-50%);
+    background:#1f2937;
+    padding:12px 18px;
+    border-radius:10px;
+    opacity:0;
+    transition:.2s;
+}
+
+.toast.show{
+    opacity:1;
+}
+
+@media(max-width:768px){
+    .grid{
+        grid-template-columns:1fr;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>🎮 Mafia RPG</h1>
+
+<div class="userbar">
+<span>👤 {{ user.username }}</span>
+<span>Lv.{{ user.level }}</span>
+<span id="goldDisplay">💰 {{ user.gold }}</span>
+<span>💎 {{ user.gem }}</span>
+<a href="/logout">로그아웃</a>
+</div>
+</header>
+
+<div class="container">
+
+<div class="notice">
+📢 시즌1 진행중! 승리 시 EXP +50%
+</div>
+
+<div class="grid">
+
+<!-- 내 정보 -->
+<div class="card">
+<h2>👤 내 정보</h2>
+
+<div class="stat">닉네임: {{ user.username }}</div>
+<div class="stat">칭호: {{ user.title }}</div>
+<div class="stat">레벨: {{ user.level }}</div>
+<div class="stat">EXP: {{ user.exp }} / {{ user.level * 100 }}</div>
+<div class="stat">전적: {{ user.wins }}승 / {{ user.loses }}패</div>
+
+{% set max_exp = user.level * 100 %}
+{% set pct = (user.exp / max_exp * 100) %}
+
+<div class="expWrap">
+<div class="expBar" style="width:{{ pct }}%"></div>
+<div class="expText">{{ user.exp }} / {{ max_exp }}</div>
+</div>
+</div>
+
+<!-- 메뉴 -->
+<div class="card">
+<h2>⚔️ 메뉴</h2>
+
+<button class="bigBtn playBtn" onclick="location.href='/game'">
+🎮 게임 시작
+</button>
+
+<button class="bigBtn rankBtn" onclick="alert('랭킹 준비중')">
+🏆 랭킹
+</button>
+
+<button class="bigBtn shopBtn"
+onclick="document.getElementById('shop').scrollIntoView({behavior:'smooth'})">
+🛒 상점으로
+</button>
+</div>
+
+<!-- 인벤토리 -->
+<div class="card">
+<h2>🎒 인벤토리</h2>
+<div id="inventoryList" class="list">
+<div class="empty">불러오는 중...</div>
+</div>
+</div>
+
+<!-- 상점 -->
+<div class="card" id="shop">
+<h2>🛒 상점</h2>
+<div id="shopList" class="list"></div>
+</div>
+
+</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- home.html 에서 script 부분만 교체 -->
+
+<script>
+const SHOP = {
+    "방탄조끼":100,
+    "투표강화권":150,
+    "독약":200
+};
+
+const $ = (id)=>document.getElementById(id);
+
+/* 토스트 */
+function toast(msg){
+    const t = $("toast");
+    t.innerText = msg;
+    t.classList.add("show");
+
+    setTimeout(()=>{
+        t.classList.remove("show");
+    },2000);
+}
+
+/* 인벤토리 출력 */
+function renderInventory(inv){
+
+    const box = $("inventoryList");
+    box.innerHTML = "";
+
+    const arr = Object.entries(inv || {});
+
+    if(arr.length === 0){
+        box.innerHTML = "<div class='empty'>비어있음</div>";
+        return;
+    }
+
+    arr.forEach(([name,qty])=>{
+
+        const row = document.createElement("div");
+        row.className = "listItem";
+
+        row.innerHTML = `
+            <span>${name}</span>
+            <span class="qty">x${qty}</span>
+        `;
+
+        box.appendChild(row);
+    });
+}
+
+/* 상점 출력 (중요 수정본) */
+function renderShop(gold){
+
+    const box = $("shopList");
+    box.innerHTML = "";
+
+    Object.entries(SHOP).forEach(([name,price])=>{
+
+        const row = document.createElement("div");
+        row.className = "listItem";
+
+        const left = document.createElement("span");
+        left.innerText = name;
+
+        const right = document.createElement("div");
+
+        const priceText = document.createElement("span");
+        priceText.className = "qty";
+        priceText.innerText = "💰 " + price + " ";
+
+        const btn = document.createElement("button");
+        btn.className = "shopBtnSmall";
+        btn.innerText = "구매";
+
+        btn.onclick = ()=>{
+            buyItem(name);
+        };
+
+        if(gold < price){
+            btn.disabled = true;
+        }
+
+        right.appendChild(priceText);
+        right.appendChild(btn);
+
+        row.appendChild(left);
+        row.appendChild(right);
+
+        box.appendChild(row);
+    });
+}
+
+/* 프로필 로드 */
+async function loadProfile(){
+
+    const res = await fetch("/profile");
+    const data = await res.json();
+
+    renderInventory(data.inventory);
+    renderShop(data.gold);
+
+    $("goldDisplay").innerText = "💰 " + data.gold;
+}
+
+/* 구매 */
+async function buyItem(name){
+
+    const res = await fetch("/buy/" + encodeURIComponent(name),{
+        method:"POST"
+    });
+
+    const data = await res.json();
+
+    if(data.error){
+        toast("❌ " + data.error);
+        return;
+    }
+
+    toast("✅ " + name + " 구매 완료");
+
+    renderInventory(data.inventory);
+    renderShop(data.gold);
+
+    $("goldDisplay").innerText = "💰 " + data.gold;
+}
+
+window.onload = loadProfile;
+</script>
+
+</body>
+</html>

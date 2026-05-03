@@ -1,0 +1,420 @@
+<!-- templates/game.html -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>Mafia RPG - Game</title>
+<link rel="icon" href="data:,">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{
+    margin:0;
+    font-family:Arial;
+    background:#f3f4f6;
+}
+
+.day{background:#f3f4f6;color:black;}
+.night{background:#111827;color:white;}
+
+header{
+    background:#0f172a;
+    color:white;
+    padding:12px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+header a{
+    color:#60a5fa;
+    text-decoration:none;
+}
+
+#roleCard{margin:10px;}
+
+.card{
+    padding:18px;
+    border-radius:12px;
+    font-size:24px;
+    font-weight:bold;
+    text-align:center;
+    box-shadow:0 4px 10px rgba(0,0,0,.2);
+}
+
+.mafia{background:#ef4444;color:white;}
+.doctor{background:#22c55e;color:white;}
+.police{background:#3b82f6;color:white;}
+.citizen{background:#d1d5db;color:black;}
+
+#phaseText{
+    padding-left:10px;
+    font-size:22px;
+    font-weight:bold;
+}
+
+#gameLayout{
+    display:flex;
+    height:calc(100vh - 170px);
+}
+
+#leftPanel{
+    flex:2;
+    display:flex;
+    flex-direction:column;
+    border-right:2px solid #ddd;
+}
+
+#chat{
+    flex:1;
+    overflow-y:auto;
+    padding:10px;
+    list-style:none;
+    margin:0;
+}
+
+#chat li{margin:4px 0;}
+
+#chatInput{
+    display:flex;
+    padding:10px;
+    background:white;
+    border-top:2px solid #ddd;
+}
+
+#msg{
+    flex:1;
+    padding:10px;
+}
+
+button{
+    padding:10px;
+    margin:4px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+#rightPanel{
+    flex:1;
+    padding:10px;
+    overflow-y:auto;
+}
+
+.dead{
+    color:gray;
+    text-decoration:line-through;
+}
+
+.exitBtn{
+    background:#ef4444;
+    color:white;
+}
+
+.itemBtn{
+    background:#f59e0b;
+    color:white;
+}
+
+@media(max-width:768px){
+    #gameLayout{flex-direction:column;}
+    #leftPanel{height:60%;}
+    #rightPanel{
+        height:40%;
+        border-top:2px solid #ddd;
+    }
+}
+</style>
+</head>
+
+<body class="day">
+
+<header>
+<div><b>🎮 Mafia RPG</b></div>
+
+<div>
+👤 {{ user.username }} |
+Lv.{{ user.level }} |
+💰 {{ user.gold }} |
+<a href="/">홈</a>
+</div>
+</header>
+
+<div id="roleCard"></div>
+<div id="phaseText">대기중...</div>
+
+<div id="gameLayout">
+
+<!-- 왼쪽 -->
+<div id="leftPanel">
+
+<ul id="chat"></ul>
+
+<div id="chatInput">
+<input id="msg" placeholder="채팅 입력..."
+onkeydown="if(event.key==='Enter') sendMsg()">
+<button onclick="sendMsg()">전송</button>
+</div>
+
+</div>
+
+<!-- 오른쪽 -->
+<div id="rightPanel">
+
+<h3>🟢 생존자</h3>
+<ul id="aliveList"></ul>
+
+<h3>💀 사망자</h3>
+<ul id="deadList"></ul>
+
+<h3>🗳️ 투표</h3>
+<div id="voteButtons"></div>
+
+<h3>🌙 밤 행동</h3>
+<div id="nightButtons"></div>
+
+<h3>🛒 아이템 사용</h3>
+<div id="itemButtons"></div>
+
+<hr>
+
+<button onclick="startGame()">게임 시작</button>
+<button class="exitBtn" onclick="exitGame()">나가기</button>
+
+</div>
+
+</div>
+
+<script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+
+<script>
+const socket = io();
+const myName = "{{ user.username }}";
+
+let players = [];
+let currentPhase = "waiting";
+
+const chat = document.getElementById("chat");
+const msg = document.getElementById("msg");
+const roleCard = document.getElementById("roleCard");
+const phaseText = document.getElementById("phaseText");
+
+const aliveList = document.getElementById("aliveList");
+const deadList = document.getElementById("deadList");
+
+const voteButtons = document.getElementById("voteButtons");
+const nightButtons = document.getElementById("nightButtons");
+const itemButtons = document.getElementById("itemButtons");
+
+socket.on("connect", ()=>{
+    socket.emit("join", myName);
+});
+
+function exitGame(){
+    socket.disconnect();
+    location.href="/";
+}
+
+/* 채팅 */
+function addChat(text){
+    const li = document.createElement("li");
+    li.innerText = text;
+    chat.appendChild(li);
+    chat.scrollTop = chat.scrollHeight;
+}
+
+socket.on("message", data=>{
+    addChat(data);
+});
+
+/* 유저목록 */
+socket.on("user_list", list=>{
+    players = list;
+    renderAliveDead(getDeadNames());
+});
+
+/* 게임 시작 */
+function startGame(){
+    socket.emit("start_game");
+}
+
+/* 역할 */
+socket.on("role", role=>{
+
+    roleCard.innerHTML = "🎭 " + role;
+
+    roleCard.className = "card " + (
+        role=="마피아" ? "mafia" :
+        role=="의사" ? "doctor" :
+        role=="경찰" ? "police" :
+        "citizen"
+    );
+});
+
+/* 낮밤 */
+socket.on("phase", phase=>{
+
+    currentPhase = phase;
+
+    if(phase=="day"){
+        document.body.className="day";
+        phaseText.innerText="☀️ 낮";
+    }
+    else if(phase=="night"){
+        document.body.className="night";
+        phaseText.innerText="🌙 밤";
+    }
+    else{
+        phaseText.innerText="대기중...";
+    }
+
+    createButtons(getDeadNames());
+});
+
+/* 메시지 */
+function sendMsg(){
+    let text = msg.value.trim();
+    if(!text) return;
+
+    socket.send(text);
+    msg.value="";
+}
+
+/* 사망자 */
+socket.on("dead_list", deadData=>{
+    renderAliveDead(deadData);
+});
+
+function getDeadNames(){
+    let arr = [];
+
+    document.querySelectorAll("#deadList li").forEach(li=>{
+        arr.push(li.innerText.split(" (")[0]);
+    });
+
+    return arr;
+}
+
+/* 생존/사망 렌더 */
+function renderAliveDead(deadData){
+
+    deadList.innerHTML="";
+    aliveList.innerHTML="";
+
+    let deadNames=[];
+
+    deadData.forEach(data=>{
+
+        let pure = data.split(" (")[0];
+        deadNames.push(pure);
+
+        let li = document.createElement("li");
+        li.className="dead";
+        li.innerText=data;
+
+        deadList.appendChild(li);
+    });
+
+    players.forEach(name=>{
+
+        if(!deadNames.includes(name)){
+            let li=document.createElement("li");
+            li.innerText=name;
+            aliveList.appendChild(li);
+        }
+    });
+
+    createButtons(deadNames);
+}
+
+/* 버튼 생성 */
+function createButtons(deadNames){
+
+    voteButtons.innerHTML="";
+    nightButtons.innerHTML="";
+    itemButtons.innerHTML="";
+
+    players.forEach(name=>{
+
+        if(deadNames.includes(name)) return;
+
+        /* 낮 투표 */
+        if(currentPhase==="day" && name!==myName){
+
+            let btn=document.createElement("button");
+            btn.innerText=name;
+
+            btn.onclick=()=>{
+                socket.emit("vote", name);
+            };
+
+            voteButtons.appendChild(btn);
+        }
+
+        /* 밤 행동 */
+        if(currentPhase==="night"){
+
+            let btn=document.createElement("button");
+            btn.innerText=name;
+
+            btn.onclick=()=>{
+                socket.emit("night_action", name);
+            };
+
+            nightButtons.appendChild(btn);
+        }
+    });
+
+    createItemButtons();
+}
+
+/* 아이템 버튼 */
+function createItemButtons(){
+
+    const items = ["방탄조끼","투표강화권","독약"];
+
+    items.forEach(item=>{
+
+        let btn=document.createElement("button");
+        btn.className="itemBtn";
+        btn.innerText=item;
+
+        btn.onclick=()=>{
+            useItem(item);
+        };
+
+        itemButtons.appendChild(btn);
+    });
+}
+
+/* 아이템 사용 */
+async function useItem(item){
+
+    try{
+        const res = await fetch("/use_item/" + encodeURIComponent(item), {
+            method:"POST"
+        });
+
+        const data = await res.json();
+
+        if(data.error){
+            alert(data.error);
+            return;
+        }
+
+        alert(data.msg);
+
+    }catch(e){
+        alert("아이템 사용 실패");
+    }
+}
+
+/* 게임 종료 */
+socket.on("game_result", data=>{
+    alert(data.msg);
+    location.href="/";
+});
+</script>
+
+</body>
+</html>

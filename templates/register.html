@@ -1,0 +1,157 @@
+<!-- templates/register.html -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>회원가입 - Mafia RPG</title>
+
+<style>
+body{
+    margin:0;
+    font-family:Arial, sans-serif;
+    background:linear-gradient(135deg,#0f172a,#1e293b);
+    color:white;
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+.box{
+    width:360px;
+    background:rgba(255,255,255,0.08);
+    padding:35px;
+    border-radius:16px;
+    box-shadow:0 10px 25px rgba(0,0,0,.35);
+    backdrop-filter:blur(10px);
+}
+
+h1{
+    margin-top:0;
+    text-align:center;
+    font-size:28px;
+}
+
+.sub{
+    text-align:center;
+    color:#cbd5e1;
+    margin-bottom:25px;
+    font-size:14px;
+}
+
+input{
+    width:100%;
+    padding:13px;
+    margin:8px 0;
+    border:none;
+    border-radius:10px;
+    font-size:15px;
+    box-sizing:border-box;
+}
+
+button{
+    width:100%;
+    padding:13px;
+    margin-top:15px;
+    border:none;
+    border-radius:10px;
+    background:#22c55e;
+    color:white;
+    font-size:16px;
+    font-weight:bold;
+    cursor:pointer;
+    transition:.2s;
+}
+
+button:hover{
+    transform:translateY(-1px);
+    background:#16a34a;
+}
+
+.link{
+    margin-top:18px;
+    text-align:center;
+    font-size:14px;
+}
+
+a{
+    color:#60a5fa;
+    text-decoration:none;
+}
+
+a:hover{
+    text-decoration:underline;
+}
+
+.tip{
+    font-size:12px;
+    color:#94a3b8;
+    margin-top:6px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+
+<h1>📝 회원가입</h1>
+<div class="sub">Mafia RPG 계정을 생성하세요</div>
+
+<form method="POST" action="/register">
+
+<input
+type="text"
+name="username"
+placeholder="아이디 (영문/숫자)"
+required
+minlength="3"
+maxlength="20">
+
+<input
+type="password"
+name="password"
+placeholder="비밀번호"
+required
+minlength="4"
+maxlength="30">
+
+<input
+type="password"
+name="password2"
+placeholder="비밀번호 확인"
+required
+minlength="4"
+maxlength="30">
+
+<button type="submit">회원가입</button>
+
+</form>
+
+<div class="tip">
+가입 후 레벨 1 / 골드 100으로 시작합니다.
+</div>
+
+<div class="link">
+이미 계정이 있나요?
+<a href="/login">로그인</a>
+</div>
+
+</div>
+
+<script>
+document.querySelector("form").addEventListener("submit", function(e){
+
+    const pw1 = document.querySelector('input[name="password"]').value;
+    const pw2 = document.querySelector('input[name="password2"]').value;
+
+    if(pw1 !== pw2){
+        e.preventDefault();
+        alert("비밀번호가 일치하지 않습니다.");
+    }
+});
+</script>
+
+</body>
+</html>

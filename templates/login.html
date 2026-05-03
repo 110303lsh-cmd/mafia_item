@@ -1,0 +1,68 @@
+<!-- templates/login.html -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>로그인 - Mafia RPG</title>
+<style>
+body{
+    margin:0;
+    background:#111827;
+    color:white;
+    font-family:Arial;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+.box{
+    background:#1f2937;
+    padding:40px;
+    border-radius:15px;
+    width:320px;
+}
+input{
+    width:100%;
+    padding:12px;
+    margin:8px 0;
+    border:none;
+    border-radius:8px;
+}
+button{
+    width:100%;
+    padding:12px;
+    margin-top:10px;
+    border:none;
+    border-radius:8px;
+    background:#22c55e;
+    color:white;
+    font-size:16px;
+    cursor:pointer;
+}
+a{color:#60a5fa;}
+</style>
+</head>
+<body>
+<div class="box">
+<h2>🎮 Mafia RPG 로그인</h2>
+
+<form method="POST">
+    <input type="text" name="username" placeholder="아이디" required>
+    <input type="password" name="password" placeholder="비밀번호" required>
+    <button type="submit">로그인</button>
+</form>
+
+{% if error %}
+<script>
+alert("{{ error }}");
+</script>
+{% endif %}
+
+<p style="margin-top:15px;">
+계정이 없나요?
+<a href="/register">회원가입</a>
+</p>
+</div>
+</body>
+</html>

@@ -23,6 +23,9 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 socketio = SocketIO(app, async_mode="threading", cors_allowed_origins="*")
 
+with app.app_context():
+    db.create_all()
+
 MIN_PLAYERS = 4
 MAX_USERNAME_LEN = 20
 MIN_PASSWORD_LEN = 4
